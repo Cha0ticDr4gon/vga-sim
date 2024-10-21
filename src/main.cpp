@@ -36,7 +36,7 @@ float texture_coords[] = {
 
 size_t num_verts = 6;
 
-//Simple test for putting multiple 
+//Simple test for putting multiple
 //TODO: Create image class so copying stuff around is nicer
 unsigned char *generate_tiled_image(MnistImageSet& image_set, int width, int height) {
 	//These are in pixels

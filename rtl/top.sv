@@ -1,5 +1,6 @@
 module top (
     input        clk      ,
+	input        rst      ,
     input        switch   ,
     output       led      ,
     output [3:0] vga_red  ,
@@ -46,6 +47,7 @@ vga vga_inst (
     ,.display_on(display_on)
 );
 
+/*
 vga_known_good vga_known_good_inst (
      .clk     (clk         )
     ,.reset   (1'b0        )
@@ -53,6 +55,7 @@ vga_known_good vga_known_good_inst (
     ,.hsync   (known_h_sync)
     ,.video_on(video_on    )
 );
+*/
 
 always @(posedge clk) begin
     led_reg <= switch;

@@ -17,6 +17,8 @@ Texture::Texture(uint32_t width, uint32_t height, uint8_t *buffer) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 unsigned int Texture::get_texture() {
