@@ -2,12 +2,16 @@
 #include <string>
 #include <cstdint>
 #include <cstring>
+#include <cmath>
 
 //Class template up here because C++
 template <int I, int D>
 class Fixed {
 public:
 	unsigned char data[(I + D - 1) / 8 + 1];
+
+	Fixed<I, D>& operator+(Fixed<I, D>& other);
+	Fixed<I, D>& operator-(Fixed<I, D>& other);
 };
 
 //Prototypes because stupid C++
@@ -224,10 +228,58 @@ void print(Fixed<I, D>& a, const std::string& msg) {
 }
 
 //TODO: Implement this using double dabble algorithm
-template<int I, int D>
+template <int I, int D>
 void printd(Fixed<I, D>& a, const std::string& msg) {
 	std::cout << msg << " = ";
 	std::cout << "TBD" << std::endl;
+}
+
+//Newton-Raphson iteration for division
+template <int I, int D>
+void nrdiv(Fixed<I * 2, D * 2>& dest, Fixed<I, D>& a, Fixed<I, D>& b) {
+	const unsigned int num_bytes = (I + D - 1) / 8 + 1;
+	const unsigned int num_bytes_d = (2 * (I + D) - 1) / 8 + 1;
+	Fixed<I * 2, D * 2> a_wide;
+	Fixed<I * 2, D * 2> b_wide;
+	copyd<I, D>(a_wide, a);
+	copyd<I, D>(b_wide, b);
+}
+
+template <int I, int D>
+void convert(Fixed<I, D>& dest, float a) {
+	const unsigned int num_bytes = (I + D - 1) / 8 + 1;
+	float i_part = std::floor(a);
+	float d_part = a - i_part + 1;
+	Fixed<I, D> temp;
+	std::memset(temp.data, 0, num_bytes);
+	//Gonna assume IEEE754 because how else am I supposed to convert this
+	//I'll find a better way to handle this later
+	//Getting the fractional part
+	uint32_t value = *((int *) &d_part);
+	unsigned char mantissa[3];
+	mantissa[0] = value & 0xFF;
+	mantissa[1] = (value >> 8) & 0xFF;
+	mantissa[2] = (value >> 16) & 0x7F;
+	for(int i = 0; i < 3; i++) std::cout << (int) mantissa[i] << " "; std::cout << std::endl;
+	//Because I split it into two parts, the exponent should never be greater than zero
+	int32_t exp = ((value >> 23) & 0xFF) - 127;
+	//Top of IEEE754 single-precision floating point mantissa is 7 bits
+	int32_t shift = 7 - (D % 8);
+	std::cout << "shift = " << shift << std::endl;
+	int32_t byte_offset = D / 8;
+	for(int i = 0; i < 3; i++) {
+		unsigned char upper = mantissa[2 - i] >> shift;
+		unsigned char lower = mantissa[2 - i] << (8 - shift);
+		std::cout << "index = " << (byte_offset - i - 1) << std::endl;
+		//More lazy checks that I'll fix later
+		if(byte_offset - i >= 0) temp.data[byte_offset - i] |= upper;
+		if(byte_offset - i - 1 >= 0) temp.data[byte_offset - i - 1] |= lower;
+	}
+	shr<I, D>(temp, temp, -exp);
+	//Getting the integer part
+	//TODO: Implement this part
+	//Copy to the destination
+	std::memcpy(dest.data, temp.data, num_bytes);
 }
 
 int main() {
@@ -293,4 +345,10 @@ int main() {
 	print<8, 8>(quotient, "quotient");
 	div<8, 8>(quotient, skibidi, two);
 	print<8, 8>(quotient, "quotient");
+
+	//Test conversion
+	float target = 2.75;
+	Fixed<8, 8> temp;
+	convert<8, 8>(temp, target);
+	print<8, 8>(temp, "temp");
 }
